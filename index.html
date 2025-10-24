@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Info Fetch Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef2f7;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+    h2 {
+      color: #222;
+      margin-bottom: 15px;
+    }
+    select, input, button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result-box {
+      background: #fff;
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .result-item {
+      border-bottom: 1px solid #eee;
+      padding: 6px 0;
+    }
+    .key {
+      font-weight: bold;
+      color: #333;
+    }
+    .value {
+      color: #555;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Fetch Info</h2>
+
+  <select id="apiType">
+    <option value="aadhaar">Aadhaar Info</option>
+    <option value="mobile">Mobile Info</option>
+  </select>
+
+  <input type="text" id="inputValue" placeholder="Enter Aadhaar or Mobile Number" maxlength="12">
+  <button onclick="fetchData()">Fetch Data</button>
+
+  <div class="result-box" id="result">Result will appear here...</div>
+
+  <script>
+    async function fetchData() {
+      const value = document.getElementById('inputValue').value.trim();
+      const apiType = document.getElementById('apiType').value;
+      const resultBox = document.getElementById('result');
+
+      if (!value) {
+        alert("Please enter a number");
+        return;
+      }
+
+      resultBox.textContent = "Fetching data...";
+
+      // choose API
+      let targetUrl = "";
+      if (apiType === "aadhaar") {
+        targetUrl = `https://khandankanaam.alphaapi.workers.dev/fetch?key=paidchx&aadhaar=${value}`;
+      } else {
+        targetUrl = `https://numberimfo.vishalboss.sbs/api.php?number=${value}&key=vishalboss_key_fdc25670cee8c9f060f1fc1a0e7faf26224a3624`;
+      }
+
+      // use vercel proxy
+      const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+
+      try {
+        const response = await fetch(proxyUrl);
+        const text = await response.text();
+
+        // Try parsing JSON
+        try {
+          const jsonData = JSON.parse(text);
+          let html = "<h3>Details:</h3>";
+          for (const key in jsonData) {
+            html += `<div class="result-item"><span class="key">${key.replace(/_/g, ' ').toUpperCase()}:</span><span class="value">${jsonData[key]}</span></div>`;
+          }
+          resultBox.innerHTML = html;
+        } catch {
+          resultBox.textContent = text;
+        }
+      } catch (error) {
+        resultBox.textContent = "Error: " + error;
+      }
+    }
+  </script>
+</body>
+</html>
