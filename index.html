@@ -61,39 +61,55 @@
       const resultBox = document.getElementById('result');
 
       if (!input) {
-        alert("Please enter a number first");
+        alert("Please enter a number");
         return;
       }
 
       resultBox.textContent = "Fetching data...";
 
-      let targetUrl = "";
-
-      if (type === "aadhaar") {
-        targetUrl = `https://khandankanaam.alphaapi.workers.dev/fetch?key=paidchx&aadhaar=${input}`;
-      } else {
-        targetUrl = `https://numberimfo.vishalboss.sbs/api.php?number=${input}&key=vishalboss_key_fdc25670cee8c9f060f1fc1a0e7faf26224a3624`;
-      }
-
-      // ✅ Better CORS proxy
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-
       try {
-        const response = await fetch(proxyUrl);
-        const content = await response.text();
-
-        try {
+        if (type === "aadhaar") {
+          // Aadhaar API with proxy
+          const targetUrl = `https://khandankanaam.alphaapi.workers.dev/fetch?key=paidchx&aadhaar=${input}`;
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+          const response = await fetch(proxyUrl);
+          const data = await response.json();
+          const content = data.contents;
           const jsonData = JSON.parse(content);
+
           let html = "<h3>Details:</h3>";
           for (const key in jsonData) {
-            html += `<div class="result-item"><span class="key">${key}:</span><span class="value">${jsonData[key]}</span></div>`;
+            html += `<div class="result-item"><span class="key">${key.replace(/_/g,' ').toUpperCase()}:</span><span class="value">${jsonData[key]}</span></div>`;
           }
           resultBox.innerHTML = html;
-        } catch {
-          resultBox.textContent = content;
+
+        } else if (type === "mobile") {
+          // Mobile API fetch directly as text
+          const url = `https://numberimfo.vishalboss.sbs/api.php?number=${input}&key=vishalboss_key_fdc25670cee8c9f060f1fc1a0e7faf26224a3624`;
+          const response = await fetch(url);
+          const text = await response.text();
+
+          // Try to parse JSON, fallback to text
+          let jsonData;
+          try {
+            jsonData = JSON.parse(text);
+          } catch {
+            jsonData = null;
+          }
+
+          if (jsonData) {
+            let html = "<h3>Details:</h3>";
+            for (const key in jsonData) {
+              html += `<div class="result-item"><span class="key">${key.replace(/_/g,' ').toUpperCase()}:</span><span class="value">${jsonData[key]}</span></div>`;
+            }
+            resultBox.innerHTML = html;
+          } else {
+            // If not JSON, just display as plain text
+            resultBox.textContent = text;
+          }
         }
-      } catch (error) {
-        resultBox.textContent = "Error: " + error;
+      } catch (err) {
+        resultBox.textContent = "Error: " + err;
       }
     }
   </script>
