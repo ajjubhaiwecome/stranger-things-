@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Info Fetch Tool</title>
+  <title>Aadhaar & Mobile Info Fetch</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,11 +12,8 @@
       align-items: center;
       padding-top: 50px;
     }
-    h2 {
-      color: #222;
-      margin-bottom: 15px;
-    }
-    select, input, button {
+    h2 { color: #222; margin-bottom: 15px; }
+    input, button, select {
       margin: 5px;
       padding: 10px;
       font-size: 16px;
@@ -29,9 +26,7 @@
       border: none;
       cursor: pointer;
     }
-    button:hover {
-      background: #0056b3;
-    }
+    button:hover { background: #0056b3; }
     .result-box {
       background: #fff;
       margin-top: 20px;
@@ -41,71 +36,61 @@
       max-width: 600px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .result-item {
-      border-bottom: 1px solid #eee;
-      padding: 6px 0;
-    }
-    .key {
-      font-weight: bold;
-      color: #333;
-    }
-    .value {
-      color: #555;
-      margin-left: 8px;
-    }
+    .result-item { border-bottom: 1px solid #eee; padding: 6px 0; }
+    .key { font-weight: bold; color: #333; }
+    .value { color: #555; margin-left: 8px; }
   </style>
 </head>
 <body>
   <h2>Fetch Info</h2>
 
-  <select id="apiType">
+  <select id="apiSelect">
     <option value="aadhaar">Aadhaar Info</option>
     <option value="mobile">Mobile Info</option>
   </select>
 
-  <input type="text" id="inputValue" placeholder="Enter Aadhaar or Mobile Number" maxlength="12">
+  <input type="text" id="inputValue" placeholder="Enter Aadhaar or Mobile Number">
   <button onclick="fetchData()">Fetch Data</button>
 
   <div class="result-box" id="result">Result will appear here...</div>
 
   <script>
     async function fetchData() {
-      const value = document.getElementById('inputValue').value.trim();
-      const apiType = document.getElementById('apiType').value;
+      const type = document.getElementById('apiSelect').value;
+      const input = document.getElementById('inputValue').value.trim();
       const resultBox = document.getElementById('result');
 
-      if (!value) {
-        alert("Please enter a number");
+      if (!input) {
+        alert("Please enter a number first");
         return;
       }
 
       resultBox.textContent = "Fetching data...";
 
-      // choose API
       let targetUrl = "";
-      if (apiType === "aadhaar") {
-        targetUrl = `https://khandankanaam.alphaapi.workers.dev/fetch?key=paidchx&aadhaar=${value}`;
+
+      if (type === "aadhaar") {
+        targetUrl = `https://khandankanaam.alphaapi.workers.dev/fetch?key=paidchx&aadhaar=${input}`;
       } else {
-        targetUrl = `https://numberimfo.vishalboss.sbs/api.php?number=${value}&key=vishalboss_key_fdc25670cee8c9f060f1fc1a0e7faf26224a3624`;
+        targetUrl = `https://numberimfo.vishalboss.sbs/api.php?number=${input}&key=vishalboss_key_fdc25670cee8c9f060f1fc1a0e7faf26224a3624`;
       }
 
-      // use vercel proxy
-      const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
       try {
         const response = await fetch(proxyUrl);
-        const text = await response.text();
+        const data = await response.json();
+        let content = data.contents;
 
-        // Try parsing JSON
         try {
-          const jsonData = JSON.parse(text);
+          const jsonData = JSON.parse(content);
           let html = "<h3>Details:</h3>";
           for (const key in jsonData) {
-            html += `<div class="result-item"><span class="key">${key.replace(/_/g, ' ').toUpperCase()}:</span><span class="value">${jsonData[key]}</span></div>`;
+            html += `<div class="result-item"><span class="key">${key}:</span><span class="value">${jsonData[key]}</span></div>`;
           }
           resultBox.innerHTML = html;
         } catch {
-          resultBox.textContent = text;
+          resultBox.textContent = content;
         }
       } catch (error) {
         resultBox.textContent = "Error: " + error;
