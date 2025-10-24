@@ -75,12 +75,12 @@
         targetUrl = `https://numberimfo.vishalboss.sbs/api.php?number=${input}&key=vishalboss_key_fdc25670cee8c9f060f1fc1a0e7faf26224a3624`;
       }
 
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+      // ✅ Better CORS proxy
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
 
       try {
         const response = await fetch(proxyUrl);
-        const data = await response.json();
-        let content = data.contents;
+        const content = await response.text();
 
         try {
           const jsonData = JSON.parse(content);
