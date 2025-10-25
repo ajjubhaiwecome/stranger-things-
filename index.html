@@ -1,117 +1,66 @@
-rr<!DOCTYPE html>
-<html lang="en">
+<?php
+// =============================
+// ⚙️ CONFIGURATION
+// =============================
+$botToken = "YOUR_NEW_BOT_TOKEN";  // यहाँ अपना नया Bot Token डालें
+$chatId   = "-1003037262117";      // आपका Telegram Channel ID
+
+// =============================
+// 🚀 BACKEND: Send file to Telegram
+// =============================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['document'])) {
+    $caption = $_POST['caption'] ?? '';
+    $filePath = $_FILES['document']['tmp_name'];
+    $fileName = $_FILES['document']['name'];
+
+    $url = "https://api.telegram.org/bot$botToken/sendDocument";
+    $post_fields = [
+        'chat_id' => $chatId,
+        'caption' => $caption,
+        'document' => new CURLFile($filePath, mime_content_type($filePath), $fileName)
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type:multipart/form-data"]);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
+    $output = curl_exec($ch);
+    curl_close($ch);
+
+    $response = json_decode($output, true);
+    if ($response['ok']) {
+        echo "<script>alert('✅ File sent successfully to Telegram!');</script>";
+    } else {
+        echo "<script>alert('❌ Failed to send: " . $response['description'] . "');</script>";
+    }
+}
+?>
+
+<!-- =============================
+🧩 FRONTEND FORM
+============================= -->
+<!DOCTYPE html>
+<html lang="hi">
 <head>
   <meta charset="UTF-8">
-  <title>Aadhaar & Mobile Info Fetch</title>
+  <title>Telegram File Sender</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #eef2f7;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 50px;
-    }
-    h2 { color: #222; margin-bottom: 15px; }
-    input, button, select {
-      margin: 5px;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover { background: #0056b3; }
-    .result-box {
-      background: #fff;
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 600px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .result-item { border-bottom: 1px solid #eee; padding: 6px 0; }
-    .key { font-weight: bold; color: #333; }
-    .value { color: #555; margin-left: 8px; }
+    body { font-family: Arial; background: #f4f4f4; padding: 40px; }
+    form { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; max-width: 400px; margin: auto; }
+    h2 { text-align: center; }
+    input, textarea, button { width: 100%; margin-top: 10px; padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
+    button { background: #0088cc; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button:hover { background: #0077b3; }
   </style>
 </head>
 <body>
-  <h2>Fetch Info</h2>
+  <h2>📤 Send File to Telegram Channel</h2>
 
-  <select id="apiSelect">
-    <option value="aadhaar">Aadhaar Info</option>
-    <option value="mobile">Mobile Info</option>
-  </select>
-
-  <input type="text" id="inputValue" placeholder="Enter Aadhaar or Mobile Number">
-  <button onclick="fetchData()">Fetch Data</button>
-
-  <div class="result-box" id="result">Result will appear here...</div>
-
-  <script>
-    async function fetchData() {
-      const type = document.getElementById('apiSelect').value;
-      const input = document.getElementById('inputValue').value.trim();
-      const resultBox = document.getElementById('result');
-
-      if (!input) {
-        alert("Please enter a number");
-        return;
-      }
-
-      resultBox.textContent = "Fetching data...";
-
-      try {
-        if (type === "aadhaar") {
-          // Aadhaar API with proxy
-          const targetUrl = `https://khandankanaam.alphaapi.workers.dev/fetch?key=paidchx&aadhaar=${input}`;
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-          const response = await fetch(proxyUrl);
-          const data = await response.json();
-          const content = data.contents;
-          const jsonData = JSON.parse(content);
-
-          let html = "<h3>Details:</h3>";
-          for (const key in jsonData) {
-            html += `<div class="result-item"><span class="key">${key.replace(/_/g,' ').toUpperCase()}:</span><span class="value">${jsonData[key]}</span></div>`;
-          }
-          resultBox.innerHTML = html;
-
-        } else if (type === "mobile") {
-          // Mobile API fetch directly as text
-          const url = `https://numberimfo.vishalboss.sbs/api.php?number=${input}&key=vishalboss_key_fdc25670cee8c9f060f1fc1a0e7faf26224a3624`;
-          const response = await fetch(url);
-          const text = await response.text();
-
-          // Try to parse JSON, fallback to text
-          let jsonData;
-          try {
-            jsonData = JSON.parse(text);
-          } catch {
-            jsonData = null;
-          }
-
-          if (jsonData) {
-            let html = "<h3>Details:</h3>";
-            for (const key in jsonData) {
-              html += `<div class="result-item"><span class="key">${key.replace(/_/g,' ').toUpperCase()}:</span><span class="value">${jsonData[key]}</span></div>`;
-            }
-            resultBox.innerHTML = html;
-          } else {
-            // If not JSON, just display as plain text
-            resultBox.textContent = text;
-          }
-        }
-      } catch (err) {
-        resultBox.textContent = "Error: " + err;
-      }
-    }
-  </script>
+  <form method="POST" enctype="multipart/form-data">
+    <input type="file" name="document" accept=".pdf,.xlsx,.xls,.csv" required>
+    <textarea name="caption" placeholder="Enter caption..." rows="3"></textarea>
+    <button type="submit">Send to Telegram</button>
+  </form>
 </body>
 </html>
