@@ -1,4 +1,4 @@
-rrexport default async function handler(req, res) {
+54rrrexport default async function handler(req, res) {
   const url = req.query.url;
 
   if (!url) {
